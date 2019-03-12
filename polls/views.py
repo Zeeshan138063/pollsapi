@@ -30,20 +30,32 @@ They infer the response format and allowed methods from the serializer class and
 
 '''
 from rest_framework import generics, status
+from rest_framework.viewsets import ModelViewSet
 
 from .models import Poll, Choice
-from .serializers import PollSerializer, ChoiceSerializer,\
+from .serializers import PollSerializer, ChoiceSerializer, \
     VoteSerializer
 
+'''
+The /polls/ and /polls/<pk>/ urls require two view classes, 
+with the same serializer and base queryset.
+We can group them into a viewset, and connect them to the urls using a router.
+'''
 
-class PollList(generics.ListCreateAPIView):
+
+class PollViewSet(ModelViewSet):
     queryset = Poll.objects.all()
     serializer_class = PollSerializer
 
 
-class PollDetail(generics.RetrieveUpdateDestroyAPIView):
-    queryset = Poll.objects.all()
-    serializer_class = PollSerializer
+# class PollList(generics.ListCreateAPIView):
+#     queryset = Poll.objects.all()
+#     serializer_class = PollSerializer
+#
+#
+# class PollDetail(generics.RetrieveUpdateDestroyAPIView):
+#     queryset = Poll.objects.all()
+#     serializer_class = PollSerializer
 
 
 class ChoiceList(generics.ListCreateAPIView):
@@ -54,8 +66,9 @@ class ChoiceList(generics.ListCreateAPIView):
 
     # queryset = Choice.objects.all()
     def get_queryset(self):
-        queryset = Choice.objects.filter(poll_id = self.kwargs["pk"])
+        queryset = Choice.objects.filter(poll_id=self.kwargs["pk"])
         return queryset
+
     serializer_class = ChoiceSerializer
 
 
@@ -70,10 +83,11 @@ queryset is not usable for creating object
 '''
 We pass on poll id and choice id. We subclass this from APIView, 
 rather than a generic view, 
-because we competely customize the behaviour. This is similar to our earlier APIView,
+because we competely customize the behaviour.
 '''
-class CreateVote(APIView):
 
+
+class CreateVote(APIView):
 
     def post(self, request, pk, choice_pk):
         voted_by = request.data.get("voted_by")
@@ -84,3 +98,11 @@ class CreateVote(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+'''
+Use viewsets.ModelViewSet when you are going to allow all or most of CRUD operations on a model.
+Use generics.* when you only want to allow some operations on a model
+Use APIView when you want to completely customize the behaviour.
+'''
