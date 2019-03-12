@@ -21,15 +21,15 @@ from django.shortcuts import render
 #         poll = get_object_or_404(Poll, pk=pk)
 #         data = PollSerializer(poll).data
 #         return Response(data)
-
-
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 '''
 The generic views of Django Rest Framework help us in code reusablity. 
 They infer the response format and allowed methods from the serializer class and base class.
 
 '''
-from rest_framework import generics
+from rest_framework import generics, status
 
 from .models import Poll, Choice
 from .serializers import PollSerializer, ChoiceSerializer,\
@@ -44,3 +44,43 @@ class PollList(generics.ListCreateAPIView):
 class PollDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Poll.objects.all()
     serializer_class = PollSerializer
+
+
+class ChoiceList(generics.ListCreateAPIView):
+    '''
+    From the urls, we pass on pk to ChoiceList. We override the get_queryset method,
+    to filter on choices with this poll_id, and let DRF handle the rest.
+    '''
+
+    # queryset = Choice.objects.all()
+    def get_queryset(self):
+        queryset = Choice.objects.filter(poll_id = self.kwargs["pk"])
+        return queryset
+    serializer_class = ChoiceSerializer
+
+
+'''
+queryset is not usable for creating object
+'''
+# class CreateVote(generics.CreateAPIView):
+#     serializer_class = VoteSerializer
+#
+
+
+'''
+We pass on poll id and choice id. We subclass this from APIView, 
+rather than a generic view, 
+because we competely customize the behaviour. This is similar to our earlier APIView,
+'''
+class CreateVote(APIView):
+
+
+    def post(self, request, pk, choice_pk):
+        voted_by = request.data.get("voted_by")
+        data = {'choice': choice_pk, 'poll': pk, 'voted_by': voted_by}
+        serializer = VoteSerializer(data=data)
+        if serializer.is_valid():
+            vote = serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
