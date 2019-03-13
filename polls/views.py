@@ -1,3 +1,4 @@
+from django.db.migrations import serializer
 from django.shortcuts import render
 
 # Create your views here.
@@ -33,8 +34,9 @@ from rest_framework import generics, status
 from rest_framework.viewsets import ModelViewSet
 
 from .models import Poll, Choice
-from .serializers import PollSerializer, ChoiceSerializer, \
-    VoteSerializer
+from .serializers import (PollSerializer, ChoiceSerializer,
+                          VoteSerializer, UserSerializer)
+from django.contrib.auth import authenticate
 
 '''
 The /polls/ and /polls/<pk>/ urls require two view classes, 
@@ -44,8 +46,31 @@ We can group them into a viewset, and connect them to the urls using a router.
 
 
 class PollViewSet(ModelViewSet):
+    # authentication_classes = ()
+    # permission_classes = ()
     queryset = Poll.objects.all()
     serializer_class = PollSerializer
+    """
+    Destroy a model instance.
+    Authenticated users can delete only polls they have created.
+    We will do that by overriding PollViewSet.destroy .
+    """
+
+    def destroy(self, request, *args, **kwargs):
+
+        instance = self.get_object()
+        if request.user.id==instance.id:
+            self.perform_destroy(instance)
+            return Response(status=status.HTTP_204_NO_CONTENT)
+        return Response(
+            {"detail": "You can not delete this poll."},
+            status=status.HTTP_403_FORBIDDEN
+        )
+
+
+    def perform_destroy(self, instance):
+        instance.delete()
+
 
 
 # class PollList(generics.ListCreateAPIView):
@@ -63,6 +88,20 @@ class ChoiceList(generics.ListCreateAPIView):
     From the urls, we pass on pk to ChoiceList. We override the get_queryset method,
     to filter on choices with this poll_id, and let DRF handle the rest.
     '''
+    '''
+    Authenticated users can create choices only for polls they have created.
+    We will do that by overriding ChoiceList.post.
+    '''
+
+    def post(self, request, *args, **kwargs):
+        poll= Poll.objects.get(id=kwargs['pk'])
+
+        if request.user.id ==poll.created_by.id:
+            return self.create(request, *args, **kwargs)
+        message = {"detail": "You can not create choice for this poll."}
+        return Response(message,status=status.HTTP_403_FORBIDDEN)
+
+
 
     # queryset = Choice.objects.all()
     def get_queryset(self):
@@ -70,6 +109,7 @@ class ChoiceList(generics.ListCreateAPIView):
         return queryset
 
     serializer_class = ChoiceSerializer
+
 
 
 '''
@@ -100,9 +140,32 @@ class CreateVote(APIView):
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
-
 '''
 Use viewsets.ModelViewSet when you are going to allow all or most of CRUD operations on a model.
 Use generics.* when you only want to allow some operations on a model
 Use APIView when you want to completely customize the behaviour.
 '''
+
+
+class UserCreate(generics.CreateAPIView):
+    authentication_classes = ()
+    permission_classes = ()
+    serializer_class = UserSerializer
+
+
+class LoginView(APIView):
+    permission_classes = ()
+
+
+    def post(self, request, ):
+        username = request.data.get("username")
+        password = request.data.get("password")
+        user = authenticate(username=username, password=password)
+        if user:
+            return Response({"token": user.auth_token.key,
+                             "user":user.username,
+                             })
+
+
+        else:
+            return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)
