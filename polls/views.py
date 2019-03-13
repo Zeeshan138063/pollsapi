@@ -46,6 +46,8 @@ We can group them into a viewset, and connect them to the urls using a router.
 
 
 class PollViewSet(ModelViewSet):
+    permission_classes = ()
+    authentication_classes = ()
     # authentication_classes = ()
     # permission_classes = ()
     queryset = Poll.objects.all()
@@ -57,9 +59,8 @@ class PollViewSet(ModelViewSet):
     """
 
     def destroy(self, request, *args, **kwargs):
-
         instance = self.get_object()
-        if request.user.id==instance.id:
+        if request.user.id == instance.id:
             self.perform_destroy(instance)
             return Response(status=status.HTTP_204_NO_CONTENT)
         return Response(
@@ -67,10 +68,8 @@ class PollViewSet(ModelViewSet):
             status=status.HTTP_403_FORBIDDEN
         )
 
-
     def perform_destroy(self, instance):
         instance.delete()
-
 
 
 # class PollList(generics.ListCreateAPIView):
@@ -84,24 +83,22 @@ class PollViewSet(ModelViewSet):
 
 
 class ChoiceList(generics.ListCreateAPIView):
-    '''
+    """
     From the urls, we pass on pk to ChoiceList. We override the get_queryset method,
     to filter on choices with this poll_id, and let DRF handle the rest.
-    '''
+    """
     '''
     Authenticated users can create choices only for polls they have created.
     We will do that by overriding ChoiceList.post.
     '''
 
     def post(self, request, *args, **kwargs):
-        poll= Poll.objects.get(id=kwargs['pk'])
+        poll = Poll.objects.get(id=kwargs['pk'])
 
-        if request.user.id ==poll.created_by.id:
+        if request.user.id == poll.created_by.id:
             return self.create(request, *args, **kwargs)
         message = {"detail": "You can not create choice for this poll."}
-        return Response(message,status=status.HTTP_403_FORBIDDEN)
-
-
+        return Response(message, status=status.HTTP_403_FORBIDDEN)
 
     # queryset = Choice.objects.all()
     def get_queryset(self):
@@ -109,7 +106,6 @@ class ChoiceList(generics.ListCreateAPIView):
         return queryset
 
     serializer_class = ChoiceSerializer
-
 
 
 '''
@@ -123,7 +119,7 @@ queryset is not usable for creating object
 '''
 We pass on poll id and choice id. We subclass this from APIView, 
 rather than a generic view, 
-because we competely customize the behaviour.
+because we completely customize the behaviour.
 '''
 
 
@@ -156,16 +152,14 @@ class UserCreate(generics.CreateAPIView):
 class LoginView(APIView):
     permission_classes = ()
 
-
     def post(self, request, ):
         username = request.data.get("username")
         password = request.data.get("password")
         user = authenticate(username=username, password=password)
         if user:
             return Response({"token": user.auth_token.key,
-                             "user":user.username,
+                             "user": user.username,
                              })
-
 
         else:
             return Response({"error": "Wrong Credentials"}, status=status.HTTP_400_BAD_REQUEST)

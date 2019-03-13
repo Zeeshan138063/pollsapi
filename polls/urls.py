@@ -22,7 +22,7 @@ obtain_auth_token method provide by DRF
 from rest_framework.authtoken import views
 
 router = DefaultRouter()
-router.register('polls', PollViewSet, base_name='polls')
+router.register('polls/', PollViewSet, base_name='polls')
 
 
 from django.urls import path
