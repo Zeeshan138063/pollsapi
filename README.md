@@ -4,4 +4,5 @@ Building APIs with Django and Django Rest Framework starts where the Django “P
 
 -------------------------------------------------
 Building APIs with Django and Django Rest Framework
-http://books.agiliq.com/projects/django-api-polls-tutorial/en/latest/_images/cover.jpg
+http://books.agiliq.com/projects/django-api-polls-tutorial/en/latest/index.html
+
