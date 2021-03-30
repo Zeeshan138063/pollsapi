@@ -3,6 +3,9 @@ Building APIs with Django and Django Rest Framework starts where the Django “P
 
 
 -------------------------------------------------
+For API end point naming conventions and Responce code standards 
+https://hackernoon.com/restful-api-designing-guidelines-the-best-practices-60e1d954e7c9
+
 For Helping  and API responce related,(like input/output of API calls) You may view the Asana.com APIs
 https://developers.asana.com/docs/duplicate-a-project
 
