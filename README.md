@@ -3,6 +3,9 @@ Building APIs with Django and Django Rest Framework starts where the Django “P
 
 
 -------------------------------------------------
+For Helping  and API responce related,(like input/output of API calls) You may view the Asana.com APIs
+https://developers.asana.com/docs/duplicate-a-project
+
 Building APIs with Django and Django Rest Framework
 http://books.agiliq.com/projects/django-api-polls-tutorial/en/latest/index.html
 
